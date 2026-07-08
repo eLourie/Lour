@@ -1,0 +1,37 @@
+# =============================================================================
+#  GPU Linux override — adds Ollama container with NVIDIA passthrough.
+#
+#  Usage:
+#    docker compose -f docker-compose.yml -f docker-compose.gpu-linux.yml \
+#      --profile gpu-linux up -d
+#
+#  Requirements:
+#    - NVIDIA Container Toolkit installed
+#    - nvidia-smi available on host
+# =============================================================================
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    profiles: [gpu-linux]
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  ollama_data:
