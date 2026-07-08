@@ -15,46 +15,37 @@ dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
     "httpx>=0.27.0",
-
     # Config & validation
     "pydantic>=2.9.0",
     "pydantic-settings>=2.6.0",
-
     # Logging
     "structlog>=24.4.0",
-
     # Database
     "sqlalchemy[asyncio]>=2.0.36",
     "asyncpg>=0.30.0",
     "alembic>=1.14.0",
-
     # Cache
     "redis[hiredis]>=5.2.0",
-
     # Vector store
     "qdrant-client[fastembed]>=1.12.0",
-
     # LLM
     "instructor>=1.7.0",
     "anthropic>=0.40.0",
     "openai>=1.55.0",
-
     # LangGraph (orchestration — Phase 5, but declared early)
     "langgraph>=0.2.50",
     "langgraph-checkpoint-postgres>=2.0.0",
-
     # Observability
     "langfuse>=2.55.0",
     "opentelemetry-api>=1.28.0",
-
     # Utilities
     "tenacity>=9.0.0",
     "python-multipart>=0.0.12",
     "slowapi>=0.1.9",
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
-    "fastembed>=0.4.0"
-
+    "fastembed>=0.4.0",
+    "greenlet>=3.5.3",
 ]
 
 [project.optional-dependencies]
