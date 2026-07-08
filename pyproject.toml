@@ -65,8 +65,8 @@ dev = [
     "factory-boy>=3.3.0",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
@@ -103,8 +103,6 @@ select = [
     "ANN",       # annotations (subset)
 ]
 ignore = [
-    "ANN101",  # missing self annotation
-    "ANN102",  # missing cls annotation
     "ANN401",  # Any allowed in some utility places
     "B008",    # FastAPI Depends() calls in defaults
 ]
