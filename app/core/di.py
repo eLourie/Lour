@@ -16,8 +16,8 @@ from typing import Annotated, Any
 
 from fastapi import Depends, Request
 
-
 # Generic state accessor
+
 
 def get_state(attr: str) -> Any:
     """
@@ -36,15 +36,14 @@ def get_state(attr: str) -> Any:
             return getattr(request.app.state, attr)
         except AttributeError as exc:
             raise RuntimeError(
-                f"app.state.{attr!r} is not set — "
-                "make sure it is initialised in the lifespan."
+                f"app.state.{attr!r} is not set — make sure it is initialised in the lifespan."
             ) from exc
 
     return _dependency
 
 
-
 # Typed accessor factories (avoids string typos in route signatures)
+
 
 def state_dep[T](attr: str, *, annotation: type[T]) -> Any:
     """
@@ -56,21 +55,21 @@ def state_dep[T](attr: str, *, annotation: type[T]) -> Any:
         async def my_route(settings: Annotated[Settings, Depends(GetSettings)]) -> ...:
             ...
     """
+
     # We return a plain callable; FastAPI resolves the annotation from Annotated[].
     def _dependency(request: Request) -> T:
         try:
             return getattr(request.app.state, attr)  # type: ignore[no-any-return]
         except AttributeError as exc:
             raise RuntimeError(
-                f"app.state.{attr!r} is not set — "
-                "make sure it is initialised in the lifespan."
+                f"app.state.{attr!r} is not set — make sure it is initialised in the lifespan."
             ) from exc
 
     return _dependency
 
 
-
 # Request-context helpers (not stored on app.state)
+
 
 async def get_request_id(request: Request) -> str:
     """Return the request_id attached by RequestIDMiddleware."""

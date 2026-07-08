@@ -38,8 +38,8 @@ from app.gateway.routes import health
 logger = structlog.get_logger(__name__)
 
 
-
 # Lifespan
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -83,8 +83,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("shutdown_complete")
 
 
-
 # Application factory
+
 
 def create_app() -> FastAPI:
     settings = get_settings()

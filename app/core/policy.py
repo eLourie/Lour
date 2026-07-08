@@ -25,7 +25,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
-
 # Budget
 
 
@@ -74,7 +73,6 @@ class BudgetPolicy(BaseModel):
         )
 
 
-
 # Approval rules (HITL)
 
 
@@ -97,7 +95,6 @@ class ApprovalRules(BaseModel):
                 self.require_approval_on_side_effects or other.require_approval_on_side_effects
             ),
         )
-
 
 
 # Policy (top-level declaration)
@@ -165,7 +162,6 @@ class Policy(BaseModel):
         return self
 
 
-
 # PolicyResolver
 
 # Layer precedence order (lower index = lower priority)
@@ -198,9 +194,7 @@ class PolicyResolver:
         Compose layers from least to most specific, applying most-restrictive-wins.
         None layers are skipped.
         """
-        layers: list[Policy] = [
-            p for p in (defaults, skill, agent, request) if p is not None
-        ]
+        layers: list[Policy] = [p for p in (defaults, skill, agent, request) if p is not None]
 
         if not layers:
             return Policy()
@@ -216,8 +210,8 @@ class PolicyResolver:
         return Policy.model_validate(raw)
 
 
-
 # Default system policy (loaded from Settings in practice)
+
 
 def default_policy() -> Policy:
     """

@@ -18,7 +18,6 @@ from uuid import uuid4
 
 import structlog
 
-
 # Context variables — populated by request-id middleware
 
 _request_id_var: ContextVar[str] = ContextVar("request_id", default="")
@@ -53,8 +52,8 @@ def get_trace_id() -> str:
     return _trace_id_var.get()
 
 
-
 # Processors
+
 
 def _inject_context(
     logger: Any,
@@ -81,8 +80,8 @@ def _drop_color_message(
     return event_dict
 
 
-
 # Setup
+
 
 def configure_logging(log_level: str = "INFO", *, json_logs: bool = True) -> None:
     """

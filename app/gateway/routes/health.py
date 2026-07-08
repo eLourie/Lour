@@ -27,16 +27,16 @@ logger = structlog.get_logger(__name__)
 router = APIRouter(tags=["health"])
 
 
-
 # /healthz — liveness
+
 
 @router.get("/healthz", include_in_schema=False)
 async def liveness() -> dict[str, str]:
     return {"status": "ok"}
 
 
-
 # /readyz — readiness (checks all backing services)
+
 
 @router.get("/readyz", include_in_schema=False)
 async def readiness(request: Request) -> JSONResponse:
@@ -71,8 +71,8 @@ async def readiness(request: Request) -> JSONResponse:
     )
 
 
-
 # Individual service checks
+
 
 async def _check_postgres(request: Request) -> dict[str, Any]:
     try:

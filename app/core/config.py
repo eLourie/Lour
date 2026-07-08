@@ -14,7 +14,6 @@ from typing import Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 # Enums (keep in sync with .env.example comments)
 
 
@@ -25,8 +24,8 @@ class AppEnv(StrEnum):
 
 
 class AuthMode(StrEnum):
-    APIKEY = "apikey"   # core
-    JWT = "jwt"         # showcase
+    APIKEY = "apikey"  # core
+    JWT = "jwt"  # showcase
 
 
 class LLMProvider(StrEnum):
@@ -57,7 +56,6 @@ class DeployProfile(StrEnum):
     SOLO = "solo"
     SPLIT = "split"
     OFFLOADED = "offloaded"
-
 
 
 # Settings groups (nested for clarity)
@@ -199,7 +197,6 @@ class SandboxSettings(BaseSettings):
     memory_mb: int = 512
     cpu_quota: float = 1.0
     timeout_s: int = 30
-
 
 
 # Root settings (composes all groups)

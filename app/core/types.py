@@ -13,7 +13,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # Type aliases
 
 JSON = dict[str, Any]
@@ -47,8 +46,8 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 """Pydantic model type variable."""
 
 
-
 # Base Pydantic model
+
 
 class AppBaseModel(BaseModel):
     """
@@ -77,8 +76,8 @@ class TimestampedModel(AppBaseModel):
     updated_at: datetime = Field(default_factory=_utcnow)
 
 
-
 # Result wrapper
+
 
 class Result(AppBaseModel):
     """
@@ -100,8 +99,8 @@ class Result(AppBaseModel):
         return cls(ok=False, error=error, detail=detail)
 
 
-
 # Pagination
+
 
 class PageParams(AppBaseModel):
     """Common pagination parameters."""
@@ -123,8 +122,8 @@ class Page(AppBaseModel):
         return self.offset + self.limit < self.total
 
 
-
 # Utilities
+
 
 def new_uuid() -> str:
     """Generate a new UUID4 as a hex string (no dashes)."""
