@@ -53,6 +53,8 @@ dependencies = [
     "slowapi>=0.1.9",
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
+    "fastembed>=0.4.0"
+
 ]
 
 [project.optional-dependencies]
@@ -78,6 +80,7 @@ dev = [
     # mypy stubs
     "types-passlib>=1.7.7",
     "types-python-jose>=3.3.4",
+    "types-redis>=4.6.0",
 ]
 
 
@@ -144,6 +147,8 @@ module = [
     "instructor.*",
     "slowapi.*",
     "testcontainers.*",
+    "asyncpg.*",
+    "passlib.*"
 ]
 ignore_missing_imports = true
 
