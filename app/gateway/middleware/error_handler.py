@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import structlog
 from fastapi import Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -49,13 +50,16 @@ async def validation_error_handler(
     exc: RequestValidationError,
 ) -> JSONResponse:
     """Convert FastAPI / Pydantic validation errors to 422 JSON."""
-    logger.info("validation_error", errors=exc.errors())
+    # jsonable_encoder normalises non-serialisable ctx values (e.g. the
+    # ValueError raised inside a Pydantic model_validator) into plain strings.
+    errors = jsonable_encoder(exc.errors())
+    logger.info("validation_error", errors=errors)
     return JSONResponse(
         status_code=422,
         content={
             "error": "validation_error",
             "message": "Request validation failed.",
-            "detail": exc.errors(),
+            "detail": errors,
         },
     )
 
