@@ -7,7 +7,9 @@ validated Pydantic ``Route``, never a parsed string (this is what makes the
 supervisor robust rather than demo-grade, PROJECT_CONTEXT §5.3, Phase 5).
 
 Routing happens once. The chosen agent then owns the request; there is no second
-round of supervision.
+round of supervision. If the run arrives with a route already set — a Skill
+declares its agent up front (§5.3), seeding ``state.route`` — this node honours
+that decision and skips the LLM classification entirely.
 """
 
 from __future__ import annotations
@@ -31,6 +33,10 @@ def make_route_node(
     deps: GraphDeps,
 ) -> Callable[[AgentState], Awaitable[dict[str, Any]]]:
     async def route(state: AgentState) -> dict[str, Any]:
+        # A skill (or any caller) may pre-decide the agent — respect it, don't re-route.
+        if state.route is not None:
+            logger.info("node_route_forced", agent=state.route.agent, session_id=state.session_id)
+            return {}
         prompt = render(
             "supervisor.j2",
             query=state.query,
