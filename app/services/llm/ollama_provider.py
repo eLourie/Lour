@@ -66,12 +66,13 @@ class OllamaProvider:
             for tc in raw_tool_calls
         ]
 
-        usage = raw.get("usage") or {}  # not always present
+        # Ollama reports token counts at the top level (no `usage` object):
+        #   prompt_eval_count → prompt tokens, eval_count → completion tokens.
         return LLMResponse(
             content=content,
             tool_calls=tool_calls,
-            prompt_tokens=usage.get("prompt_tokens", 0),
-            completion_tokens=usage.get("completion_tokens", 0),
+            prompt_tokens=raw.get("prompt_eval_count") or 0,
+            completion_tokens=raw.get("eval_count") or 0,
             model=raw.get("model", self._model),
         )
 

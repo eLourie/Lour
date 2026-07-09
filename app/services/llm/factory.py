@@ -20,23 +20,26 @@ from app.services.llm.ollama_provider import OllamaProvider
 def build_llm_provider(
     llm_settings: LLMSettings,
     ollama_settings: OllamaSettings,
+    *,
+    ollama_client: OllamaClient | None = None,
 ) -> LLMProvider:
     """
     Construct and return the active LLM provider.
 
     Changing ``LLM_PROVIDER`` in ``.env`` is sufficient — no code changes.
-    The Ollama client is created here only when needed, keeping cloud-only
-    deployments free from the Ollama dependency.
+    Pass ``ollama_client`` to reuse the process-wide singleton (the lifespan
+    owns and closes it); if omitted a fresh client is created — but then the
+    caller is responsible for closing it.
     """
     match llm_settings.provider:
         case LLMProviderEnum.OLLAMA:
-            client = OllamaClient(ollama_settings)
+            client = ollama_client or OllamaClient(ollama_settings)
             ollama_provider = OllamaProvider(client, llm_settings)
-            assert isinstance(ollama_provider, LLMProvider)  # noqa: S101
+            assert isinstance(ollama_provider, LLMProvider)
             return ollama_provider
         case LLMProviderEnum.ANTHROPIC | LLMProviderEnum.OPENAI:
             cloud_provider = build_cloud_provider(llm_settings)
-            assert isinstance(cloud_provider, LLMProvider)  # noqa: S101
+            assert isinstance(cloud_provider, LLMProvider)
             return cloud_provider
         case _:
             raise LLMError(
