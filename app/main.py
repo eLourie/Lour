@@ -31,7 +31,6 @@ import structlog
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 
-from app.core.config import LLMProvider as LLMProviderEnum
 from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.core.logging import configure_logging
@@ -82,17 +81,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await qdrant.ensure_collection(settings.qdrant.collection_docs)
     await qdrant.ensure_collection(settings.qdrant.collection_memory)
 
-    # 2. Ollama client (shared by LLM provider + embedding service)
-    ollama: OllamaClient | None = None
-    if settings.llm.provider == LLMProviderEnum.OLLAMA:
-        ollama = OllamaClient(settings.ollama)
+    # 2. Ollama client — one per process, shared by the LLM provider (in
+    #    ollama mode) and the embedding service (bge-m3 is always local).
+    #    The lifespan owns it and closes it on shutdown.
+    ollama = OllamaClient(settings.ollama)
 
-    # 3. LLM provider (protocol-based — swap via LLM_PROVIDER)
-    llm = build_llm_provider(settings.llm, settings.ollama)
+    # 3. LLM provider (protocol-based — swap via LLM_PROVIDER).
+    #    Reuses the shared client in ollama mode instead of opening a second pool.
+    llm = build_llm_provider(settings.llm, settings.ollama, ollama_client=ollama)
 
-    # 4. Embedding service (bge-m3 dense + Redis cache)
-    _embed_client = ollama or OllamaClient(settings.ollama)  # cloud path still needs embed
-    bge_m3 = BgeM3EmbeddingService(_embed_client, settings.llm.embed_model)
+    # 4. Embedding service (bge-m3 dense + Redis cache) — always via local Ollama
+    bge_m3 = BgeM3EmbeddingService(ollama, settings.llm.embed_model)
     embeddings = CachedEmbeddingService(bge_m3, redis)
 
     # 5. Reranker (lazy-load local MPS; no-op when RERANKER_MODE=none)
@@ -128,8 +127,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await qdrant.aclose()
     await redis.aclose()
     await postgres.aclose()
-    if ollama is not None:
-        await ollama.aclose()
+    await ollama.aclose()
 
     logger.info("shutdown_complete")
 
@@ -143,7 +141,7 @@ def create_app() -> FastAPI:
     # Configure structlog — must run before any logger is used.
     configure_logging(
         log_level=settings.app.log_level,
-        json_logs=settings.app.env != "development",
+        json_logs=settings.app.log_format == "json",
     )
 
     app = FastAPI(

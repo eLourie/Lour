@@ -61,12 +61,12 @@ async def test_stream_yields_tokens(llm_provider):
 
 
 @pytest.mark.asyncio
-async def test_structured_output(llm_provider):
+async def test_structured_output(settings):
     class Greeting(BaseModel):
         message: str
         language: str
 
-    svc = StructuredOutputService(llm_provider)
+    svc = StructuredOutputService(settings.llm, settings.ollama)
     result = await svc.complete(
         [{"role": "user", "content": "Greet me in English"}],
         schema=Greeting,
