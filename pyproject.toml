@@ -35,6 +35,9 @@ dependencies = [
     # LangGraph (orchestration — Phase 5, but declared early)
     "langgraph>=0.2.50",
     "langgraph-checkpoint-postgres>=2.0.0",
+    # Tools layer (Phase 3)
+    "mcp>=1.1.0",                       # Model Context Protocol — client + server
+    "docker>=7.1.0",                    # code-exec sandbox (docker-py, sync → to_thread)
     # Observability
     "langfuse>=2.55.0",
     "opentelemetry-api>=1.28.0",
@@ -148,7 +151,10 @@ module = [
     "slowapi.*",
     "testcontainers.*",
     "asyncpg.*",
-    "passlib.*"
+    "passlib.*",
+    "docker.*",
+    "mcp.*",
+    "trafilatura.*"
 ]
 ignore_missing_imports = true
 
