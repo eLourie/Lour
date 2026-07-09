@@ -23,6 +23,10 @@ Phase 3 singletons:
   tool_registry — ToolRegistry (builtins + MCP-adapter tools)
   tool_gate     — ToolGate (allowlist + approval enforcement)
   mcp_client    — McpClient (external MCP servers; dormant when none configured)
+
+Phase 4 singletons:
+  memory        — MemoryManager (short-term / long-term / episodic facade)
+  consolidation — ConsolidationService (APScheduler background fact distillation)
 """
 
 from __future__ import annotations
@@ -59,6 +63,13 @@ from app.services.embeddings.bge_m3 import BgeM3EmbeddingService
 from app.services.embeddings.cache import CachedEmbeddingService
 from app.services.embeddings.sparse import Bm42SparseEmbeddingService
 from app.services.llm.factory import build_llm_provider
+from app.services.llm.structured import StructuredOutputService
+from app.services.memory.base import MemoryManager
+from app.services.memory.consolidation import ConsolidationService
+from app.services.memory.episodic import EpisodicMemory
+from app.services.memory.long_term import LongTermMemory
+from app.services.memory.scoring import ImportanceScorer
+from app.services.memory.short_term import ShortTermMemory
 from app.services.rag.chunking import SemanticChunker
 from app.services.rag.ingestion import IngestionPipeline
 from app.services.rag.loaders import default_loaders
@@ -159,7 +170,31 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     tool_gate = ToolGate(tool_registry)
     logger.info("tools_ready", count=len(tool_registry), tools=sorted(tool_registry.names()))
 
-    # 9. Attach to app.state for DI
+    # 9. Memory system (Phase 4) — three layers behind one facade, plus the
+    #    background consolidation scheduler (APScheduler, ADR-012). Long-term
+    #    reuses the cached dense embedder; scoring/extraction use structured LLM.
+    structured_llm = StructuredOutputService(settings.llm, settings.ollama)
+    short_term = ShortTermMemory(redis, llm, settings.memory)
+    long_term = LongTermMemory(
+        qdrant=qdrant,
+        embedder=embeddings,
+        settings=settings.memory,
+        collection=settings.qdrant.collection_memory,
+    )
+    episodic = EpisodicMemory(postgres)
+    memory = MemoryManager(short_term=short_term, long_term=long_term, episodic=episodic)
+    importance_scorer = ImportanceScorer(structured_llm, redis)
+    consolidation = ConsolidationService(
+        short_term=short_term,
+        long_term=long_term,
+        episodic=episodic,
+        scorer=importance_scorer,
+        structured=structured_llm,
+        settings=settings.memory,
+    )
+    consolidation.start()
+
+    # 10. Attach to app.state for DI
     app.state.postgres = postgres
     app.state.redis = redis
     app.state.qdrant = qdrant
@@ -176,6 +211,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.tool_registry = tool_registry
     app.state.tool_gate = tool_gate
     app.state.mcp_client = mcp_client
+    app.state.memory = memory
+    app.state.consolidation = consolidation
 
     # Legacy alias: health.py (Phase 0) used db_pool name — keep until health.py is updated
     app.state.db_pool = postgres
@@ -187,6 +224,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown — reverse order of initialisation
     logger.info("shutdown")
 
+    await consolidation.shutdown()
     telemetry.shutdown()
     await mcp_client.aclose()
     await reranker_client.aclose()

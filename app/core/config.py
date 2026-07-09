@@ -188,6 +188,39 @@ class AgentSettings(BaseSettings):
     budget_tokens: int = 100_000
 
 
+class MemorySettings(BaseSettings):
+    """Three-layer memory: short-term (Redis), long-term (Qdrant), episodic (PG)."""
+
+    model_config = SettingsConfigDict(env_prefix="MEMORY_", env_file=".env", extra="ignore")
+
+    # Short-term: messages kept verbatim in the sliding window before the tail
+    # is summarised. TTL bounds how long an idle session's window survives.
+    short_term_window: int = 20
+    short_term_ttl_s: int = 60 * 60 * 24  # 1 day
+
+    # Long-term recall
+    long_term_top_k: int = 5
+    # Over-fetch factor: pull this * top_k dense candidates, then re-score.
+    candidate_multiplier: int = 6
+
+    # Combined score = alpha*cosine + beta*recency + gamma*importance.
+    # Weights need not sum to 1 — ordering is what matters.
+    score_alpha: float = 0.6
+    score_beta: float = 0.2
+    score_gamma: float = 0.2
+    # Recency decays by half every this many hours (exponential).
+    recency_half_life_h: float = 72.0
+
+    # Consolidation (APScheduler background job)
+    consolidation_enabled: bool = True
+    consolidation_interval_s: int = 3600
+    # A candidate fact whose nearest existing memory scores >= this cosine is
+    # treated as a duplicate and skipped.
+    dedup_threshold: float = 0.9
+    # Minimum importance for an extracted fact to be persisted to long-term.
+    min_importance: float = 0.3
+
+
 class SandboxSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="SANDBOX_", env_file=".env", extra="ignore")
 
@@ -267,6 +300,7 @@ class Settings(BaseSettings):
     qdrant: QdrantSettings = Field(default_factory=QdrantSettings)
     telemetry: TelemetrySettings = Field(default_factory=TelemetrySettings)
     agent: AgentSettings = Field(default_factory=AgentSettings)
+    memory: MemorySettings = Field(default_factory=MemorySettings)
     sandbox: SandboxSettings = Field(default_factory=SandboxSettings)
     tools: ToolsSettings = Field(default_factory=ToolsSettings)
     mcp: McpSettings = Field(default_factory=McpSettings)

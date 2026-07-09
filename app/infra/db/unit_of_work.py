@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self
 
 from app.infra.db.repositories.document_repo import DocumentRepository
+from app.infra.db.repositories.episodic_repo import EpisodicRepository
 from app.infra.db.repositories.session_repo import SessionRepository
 
 if TYPE_CHECKING:
@@ -38,6 +39,7 @@ class UnitOfWork:
         self._session: AsyncSession | None = None
         self.sessions: SessionRepository  # set in __aenter__
         self.documents: DocumentRepository  # set in __aenter__
+        self.episodic: EpisodicRepository  # set in __aenter__
 
     async def __aenter__(self) -> Self:
         # We bypass the context-manager on PostgresClient intentionally:
@@ -45,6 +47,7 @@ class UnitOfWork:
         self._session = self._postgres._session_factory()
         self.sessions = SessionRepository(self._session)
         self.documents = DocumentRepository(self._session)
+        self.episodic = EpisodicRepository(self._session)
         return self
 
     async def __aexit__(
