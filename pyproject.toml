@@ -36,6 +36,7 @@ dependencies = [
     "langgraph>=0.2.50",
     "langgraph-checkpoint-postgres>=2.0.0",
     "jinja2>=3.1.0",                    # versioned agent prompt templates (Phase 5)
+    "pyyaml>=6.0",                      # skill declarations (Phase 6)
     # Tools layer (Phase 3)
     "mcp>=1.1.0",                       # Model Context Protocol — client + server
     "docker>=7.1.0",                    # code-exec sandbox (docker-py, sync → to_thread)
@@ -87,6 +88,7 @@ dev = [
     "types-passlib>=1.7.7",
     "types-python-jose>=3.3.4",
     "types-redis>=4.6.0",
+    "types-pyyaml>=6.0.12",
 ]
 
 
