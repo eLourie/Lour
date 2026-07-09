@@ -90,7 +90,9 @@ class _StubMemory:
     def __init__(self) -> None:
         self.writes: list[tuple[str, str]] = []
 
-    async def recall(self, session_id: str, query: str, *, top_k: int | None = None) -> MemoryContext:
+    async def recall(
+        self, session_id: str, query: str, *, top_k: int | None = None
+    ) -> MemoryContext:
         return MemoryContext()
 
     async def write(self, session_id: str, role: str, content: str) -> None:
@@ -174,7 +176,10 @@ async def test_researcher_route_plans_and_finishes() -> None:
     )
     deps = _make_deps(
         llm,
-        _StubStructured(agent="researcher", reflection=Reflection(is_complete=True, reasoning="done")),
+        _StubStructured(
+            agent="researcher",
+            reflection=Reflection(is_complete=True, reasoning="done"),
+        ),
         _StubMemory(),
     )
     graph = build_graph(deps, checkpointer=InMemorySaver())
