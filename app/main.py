@@ -42,7 +42,7 @@ from app.gateway.middleware.error_handler import (
 )
 from app.gateway.middleware.logging import AccessLoggingMiddleware
 from app.gateway.middleware.request_id import RequestIDMiddleware
-from app.gateway.routes import health
+from app.gateway.routes import health, rag
 from app.infra.clients.ollama import OllamaClient
 from app.infra.clients.postgres import PostgresClient
 from app.infra.clients.qdrant import QdrantClient
@@ -51,7 +51,13 @@ from app.infra.clients.reranker import RerankerClient
 from app.infra.clients.telemetry import build_telemetry_client
 from app.services.embeddings.bge_m3 import BgeM3EmbeddingService
 from app.services.embeddings.cache import CachedEmbeddingService
+from app.services.embeddings.sparse import Bm42SparseEmbeddingService
 from app.services.llm.factory import build_llm_provider
+from app.services.rag.chunking import SemanticChunker
+from app.services.rag.ingestion import IngestionPipeline
+from app.services.rag.loaders import default_loaders
+from app.services.rag.query_transform import QueryTransformer
+from app.services.rag.retrieval import HybridRetriever
 from app.services.reranker.local_mps import LocalMPSReranker
 
 logger = structlog.get_logger(__name__)
@@ -102,15 +108,41 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     telemetry = build_telemetry_client(settings.telemetry)
     set_telemetry_client(telemetry)
 
-    # 7. Attach to app.state for DI
+    # 7. RAG pipeline (Phase 2) — sparse leg via FastEmbed, hybrid retrieval,
+    #    idempotent ingestion. Sparse model loads lazily on first use.
+    sparse_embeddings = Bm42SparseEmbeddingService(settings.sparse_model)
+    chunker = SemanticChunker(embeddings)
+    rag_retriever = HybridRetriever(
+        qdrant=qdrant,
+        dense_embedder=embeddings,
+        sparse_embedder=sparse_embeddings,
+        reranker=reranker,
+        collection=settings.qdrant.collection_docs,
+    )
+    rag_ingestion = IngestionPipeline(
+        loaders=default_loaders(),
+        chunker=chunker,
+        dense_embedder=embeddings,
+        sparse_embedder=sparse_embeddings,
+        qdrant=qdrant,
+        postgres=postgres,
+        collection=settings.qdrant.collection_docs,
+    )
+    rag_query_transformer = QueryTransformer(llm)
+
+    # 8. Attach to app.state for DI
     app.state.postgres = postgres
     app.state.redis = redis
     app.state.qdrant = qdrant
     app.state.ollama = ollama
     app.state.llm = llm
     app.state.embeddings = embeddings
+    app.state.sparse_embeddings = sparse_embeddings
     app.state.reranker = reranker
     app.state.telemetry = telemetry
+    app.state.rag_retriever = rag_retriever
+    app.state.rag_ingestion = rag_ingestion
+    app.state.rag_query_transformer = rag_query_transformer
 
     # Legacy alias: health.py (Phase 0) used db_pool name — keep until health.py is updated
     app.state.db_pool = postgres
@@ -164,11 +196,11 @@ def create_app() -> FastAPI:
 
     # Routes
     app.include_router(health.router)
+    app.include_router(rag.router, prefix="/v1")
 
     # Later phases add:
     # app.include_router(chat.router,   prefix="/v1")
     # app.include_router(skills.router, prefix="/v1")
-    # app.include_router(rag.router,    prefix="/v1")
     # app.include_router(tools.router,  prefix="/v1")
     # app.include_router(admin.router,  prefix="/v1")
 
