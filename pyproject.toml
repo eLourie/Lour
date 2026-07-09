@@ -35,6 +35,7 @@ dependencies = [
     # LangGraph (orchestration — Phase 5, but declared early)
     "langgraph>=0.2.50",
     "langgraph-checkpoint-postgres>=2.0.0",
+    "jinja2>=3.1.0",                    # versioned agent prompt templates (Phase 5)
     # Tools layer (Phase 3)
     "mcp>=1.1.0",                       # Model Context Protocol — client + server
     "docker>=7.1.0",                    # code-exec sandbox (docker-py, sync → to_thread)
@@ -120,8 +121,9 @@ ignore = [
 "migrations/**" = ["ANN", "N999"]
 # Starlette middleware signatures require runtime presence of Request/Response/ASGIApp
 "app/gateway/middleware/**" = ["TC001", "TC002"]
-# FastAPI route handlers require runtime Request; health.py also does inline import
-"app/gateway/routes/**" = ["TC002", "PLC0415"]
+# FastAPI route handlers need runtime access to annotations (Request, request/
+# response DTOs), so imports must stay out of the type-checking block.
+"app/gateway/routes/**" = ["TC001", "TC002", "PLC0415"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
@@ -160,6 +162,13 @@ module = [
     "apscheduler.*",
 ]
 ignore_missing_imports = true
+
+# LangGraph graph-assembly: its StateGraph.add_node overloads and the generic
+# CompiledStateGraph don't resolve under --strict (a known upstream typing gap).
+# Scope the relaxation to the assembly modules only; nodes/state stay strict.
+[[tool.mypy.overrides]]
+module = ["app.agents.graphs.*"]
+disable_error_code = ["call-overload", "type-arg"]
 
 
 # Pytest

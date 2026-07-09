@@ -27,6 +27,10 @@ Phase 3 singletons:
 Phase 4 singletons:
   memory        — MemoryManager (short-term / long-term / episodic facade)
   consolidation — ConsolidationService (APScheduler background fact distillation)
+
+Phase 5 singletons:
+  checkpointer  — CheckpointerManager (AsyncPostgresSaver, resume/replay, ADR-008)
+  agent_graph   — compiled supervisor graph (researcher/coder/direct + HITL + SSE)
 """
 
 from __future__ import annotations
@@ -41,6 +45,10 @@ import structlog
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 
+from app.agents.checkpointing import CheckpointerManager
+from app.agents.deps import GraphDeps
+from app.agents.enforcement.budget import BudgetEnforcer
+from app.agents.graphs.builder import build_graph
 from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.core.logging import configure_logging
@@ -52,7 +60,7 @@ from app.gateway.middleware.error_handler import (
 )
 from app.gateway.middleware.logging import AccessLoggingMiddleware
 from app.gateway.middleware.request_id import RequestIDMiddleware
-from app.gateway.routes import health, rag, tools
+from app.gateway.routes import chat, health, rag, sessions, tools
 from app.infra.clients.ollama import OllamaClient
 from app.infra.clients.postgres import PostgresClient
 from app.infra.clients.qdrant import QdrantClient
@@ -194,7 +202,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
     consolidation.start()
 
-    # 10. Attach to app.state for DI
+    # 10. Orchestration (Phase 5) — Postgres checkpointer + compiled supervisor
+    #     graph. The graph closes over its dependencies via GraphDeps; the
+    #     checkpointer (ADR-008) gives it resume/replay across restarts.
+    checkpointer = CheckpointerManager(settings.postgres)
+    saver = await checkpointer.start()
+    graph_deps = GraphDeps(
+        llm=llm,
+        structured=structured_llm,
+        tool_registry=tool_registry,
+        tool_gate=tool_gate,
+        memory=memory,
+        enforcer=BudgetEnforcer(),
+        settings=settings,
+    )
+    agent_graph = build_graph(graph_deps, checkpointer=saver)
+    logger.info("agent_graph_ready")
+
+    # 11. Attach to app.state for DI
     app.state.postgres = postgres
     app.state.redis = redis
     app.state.qdrant = qdrant
@@ -213,6 +238,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.mcp_client = mcp_client
     app.state.memory = memory
     app.state.consolidation = consolidation
+    app.state.checkpointer = checkpointer
+    app.state.agent_graph = agent_graph
 
     # Legacy alias: health.py (Phase 0) used db_pool name — keep until health.py is updated
     app.state.db_pool = postgres
@@ -224,6 +251,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown — reverse order of initialisation
     logger.info("shutdown")
 
+    await checkpointer.aclose()
     await consolidation.shutdown()
     telemetry.shutdown()
     await mcp_client.aclose()
@@ -270,9 +298,10 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(rag.router, prefix="/v1")
     app.include_router(tools.router, prefix="/v1")
+    app.include_router(chat.router, prefix="/v1")
+    app.include_router(sessions.router, prefix="/v1")
 
     # Later phases add:
-    # app.include_router(chat.router,   prefix="/v1")
     # app.include_router(skills.router, prefix="/v1")
     # app.include_router(admin.router,  prefix="/v1")
 

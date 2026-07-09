@@ -1,0 +1,18 @@
+You are assessing whether a research task is complete.
+
+Original request:
+{{ query }}
+{% if plan %}
+
+Plan:
+{% for step in plan %}{{ loop.index }}. {{ step }}
+{% endfor %}
+{% endif %}
+
+Tools used so far: {{ tools_summary }}
+
+Latest findings:
+{{ last_content or "(no answer produced yet)" }}
+
+Decide whether the gathered information is sufficient to fully answer the
+request. If it is not, say what is still missing.
