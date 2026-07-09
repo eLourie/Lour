@@ -17,6 +17,12 @@ Phase 1 singletons:
   embeddings — CachedEmbeddingService (bge-m3 dense + Redis cache)
   reranker   — LocalMPSReranker (lazy-load, degrades gracefully)
   telemetry  — LangfuseTelemetryClient | NoOpTelemetryClient
+
+Phase 3 singletons:
+  sandbox       — DockerSandbox (isolated code execution)
+  tool_registry — ToolRegistry (builtins + MCP-adapter tools)
+  tool_gate     — ToolGate (allowlist + approval enforcement)
+  mcp_client    — McpClient (external MCP servers; dormant when none configured)
 """
 
 from __future__ import annotations
@@ -42,7 +48,7 @@ from app.gateway.middleware.error_handler import (
 )
 from app.gateway.middleware.logging import AccessLoggingMiddleware
 from app.gateway.middleware.request_id import RequestIDMiddleware
-from app.gateway.routes import health, rag
+from app.gateway.routes import health, rag, tools
 from app.infra.clients.ollama import OllamaClient
 from app.infra.clients.postgres import PostgresClient
 from app.infra.clients.qdrant import QdrantClient
@@ -59,6 +65,12 @@ from app.services.rag.loaders import default_loaders
 from app.services.rag.query_transform import QueryTransformer
 from app.services.rag.retrieval import HybridRetriever
 from app.services.reranker.local_mps import LocalMPSReranker
+from app.services.sandbox.docker_sandbox import DockerSandbox
+from app.tools.builtins import build_builtin_tools
+from app.tools.gate import ToolGate
+from app.tools.mcp.adapter import adapt_mcp_tools
+from app.tools.mcp.client import McpClient
+from app.tools.registry import ToolRegistry
 
 logger = structlog.get_logger(__name__)
 
@@ -130,7 +142,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
     rag_query_transformer = QueryTransformer(llm)
 
-    # 8. Attach to app.state for DI
+    # 8. Tools layer (Phase 3) — sandbox, builtin registry, ToolGate, MCP bridge.
+    #    Builtins are wired with their deps; MCP-adapter tools are added after the
+    #    client connects to any configured external servers.
+    sandbox = DockerSandbox(settings.sandbox)
+    tool_registry = ToolRegistry()
+    tool_registry.register_all(
+        build_builtin_tools(settings=settings, retriever=rag_retriever, sandbox=sandbox)
+    )
+
+    mcp_client = McpClient(settings.mcp.servers())
+    await mcp_client.connect()
+    for adapter in adapt_mcp_tools(mcp_client):
+        tool_registry.register(adapter, replace=True)
+
+    tool_gate = ToolGate(tool_registry)
+    logger.info("tools_ready", count=len(tool_registry), tools=sorted(tool_registry.names()))
+
+    # 9. Attach to app.state for DI
     app.state.postgres = postgres
     app.state.redis = redis
     app.state.qdrant = qdrant
@@ -143,6 +172,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.rag_retriever = rag_retriever
     app.state.rag_ingestion = rag_ingestion
     app.state.rag_query_transformer = rag_query_transformer
+    app.state.sandbox = sandbox
+    app.state.tool_registry = tool_registry
+    app.state.tool_gate = tool_gate
+    app.state.mcp_client = mcp_client
 
     # Legacy alias: health.py (Phase 0) used db_pool name — keep until health.py is updated
     app.state.db_pool = postgres
@@ -155,6 +188,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("shutdown")
 
     telemetry.shutdown()
+    await mcp_client.aclose()
     await reranker_client.aclose()
     await qdrant.aclose()
     await redis.aclose()
@@ -197,11 +231,11 @@ def create_app() -> FastAPI:
     # Routes
     app.include_router(health.router)
     app.include_router(rag.router, prefix="/v1")
+    app.include_router(tools.router, prefix="/v1")
 
     # Later phases add:
     # app.include_router(chat.router,   prefix="/v1")
     # app.include_router(skills.router, prefix="/v1")
-    # app.include_router(tools.router,  prefix="/v1")
     # app.include_router(admin.router,  prefix="/v1")
 
     return app

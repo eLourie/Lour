@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -194,6 +194,47 @@ class SandboxSettings(BaseSettings):
     memory_mb: int = 512
     cpu_quota: float = 1.0
     timeout_s: int = 30
+    pids_limit: int = 128
+    python_image: str = "python:3.12-slim"
+    node_image: str = "node:20-slim"
+
+
+class ToolsSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="TOOLS_", env_file=".env", extra="ignore")
+
+    # filesystem tool is confined to this directory (path-traversal guarded)
+    workspace_dir: str = "./workspace"
+    # http_request tool only reaches these hosts (comma-separated in env)
+    http_allowlist: list[str] = Field(default_factory=list)
+    # result cache TTL for idempotent (non-side-effecting) tools
+    cache_ttl_s: int = 300
+
+    @field_validator("http_allowlist", mode="before")
+    @classmethod
+    def _split_allowlist(cls, v: object) -> object:
+        # Accept a comma-separated string from env; pass lists through untouched.
+        if isinstance(v, str):
+            return [h.strip() for h in v.split(",") if h.strip()]
+        return v
+
+
+class McpSettings(BaseSettings):
+    """External MCP servers this instance connects to as a client (ADR-006)."""
+
+    model_config = SettingsConfigDict(env_prefix="MCP_", env_file=".env", extra="ignore")
+
+    # JSON mapping of {name: {command, args, env}} for stdio MCP servers.
+    # Empty by default — MCP client stays dormant until configured.
+    servers_json: str = ""
+
+    def servers(self) -> dict[str, dict[str, Any]]:
+        """Parse the configured stdio servers; return {} when unset or invalid."""
+        if not self.servers_json.strip():
+            return {}
+        import json
+
+        parsed: dict[str, dict[str, Any]] = json.loads(self.servers_json)
+        return parsed
 
 
 # Root settings (composes all groups)
@@ -227,6 +268,8 @@ class Settings(BaseSettings):
     telemetry: TelemetrySettings = Field(default_factory=TelemetrySettings)
     agent: AgentSettings = Field(default_factory=AgentSettings)
     sandbox: SandboxSettings = Field(default_factory=SandboxSettings)
+    tools: ToolsSettings = Field(default_factory=ToolsSettings)
+    mcp: McpSettings = Field(default_factory=McpSettings)
 
     @field_validator("deploy_profile", mode="before")
     @classmethod
