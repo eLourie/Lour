@@ -21,6 +21,13 @@ from tests.eval.agents.benchmark import (
     run_agent_benchmark,
 )
 from tests.eval.rag.ragas_suite import _print_report, run_rag_eval
+from tests.eval.skills.router_eval import (
+    ROUTING_THRESHOLD,
+    run_router_eval,
+)
+from tests.eval.skills.router_eval import (
+    print_report as print_routing_report,
+)
 
 
 async def _run_rag() -> int:
@@ -46,15 +53,27 @@ async def _run_agents() -> int:
     return 1
 
 
+async def _run_skill_routing() -> int:
+    report = await run_router_eval()
+    print_routing_report(report)
+    if report.accuracy >= ROUTING_THRESHOLD:
+        print(f"✓ routing accuracy {report.accuracy:.0%} >= {ROUTING_THRESHOLD:.0%}")
+        return 0
+    print(f"✗ routing accuracy {report.accuracy:.0%} < {ROUTING_THRESHOLD:.0%}")
+    return 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run evaluation suites.")
-    parser.add_argument("--suite", choices=["rag", "agents"], required=True)
+    parser.add_argument("--suite", choices=["rag", "agents", "skill_routing"], required=True)
     args = parser.parse_args()
 
     if args.suite == "rag":
         return asyncio.run(_run_rag())
     if args.suite == "agents":
         return asyncio.run(_run_agents())
+    if args.suite == "skill_routing":
+        return asyncio.run(_run_skill_routing())
     return 1  # pragma: no cover — argparse guards choices
 
 
