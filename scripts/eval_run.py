@@ -15,6 +15,11 @@ import argparse
 import asyncio
 import sys
 
+from tests.eval.agents.benchmark import (
+    SUCCESS_THRESHOLD,
+    print_report,
+    run_agent_benchmark,
+)
 from tests.eval.rag.ragas_suite import _print_report, run_rag_eval
 
 
@@ -31,13 +36,25 @@ async def _run_rag() -> int:
     return 1
 
 
+async def _run_agents() -> int:
+    report = await run_agent_benchmark()
+    print_report(report)
+    if report.success_rate >= SUCCESS_THRESHOLD:
+        print(f"✓ agent success rate {report.success_rate:.0%} >= {SUCCESS_THRESHOLD:.0%}")
+        return 0
+    print(f"✗ agent success rate {report.success_rate:.0%} < {SUCCESS_THRESHOLD:.0%}")
+    return 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run evaluation suites.")
-    parser.add_argument("--suite", choices=["rag"], required=True)
+    parser.add_argument("--suite", choices=["rag", "agents"], required=True)
     args = parser.parse_args()
 
     if args.suite == "rag":
         return asyncio.run(_run_rag())
+    if args.suite == "agents":
+        return asyncio.run(_run_agents())
     return 1  # pragma: no cover — argparse guards choices
 
 
