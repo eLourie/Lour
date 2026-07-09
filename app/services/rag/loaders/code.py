@@ -73,7 +73,7 @@ class CodeLoader:
         try:
             from tree_sitter_language_pack import get_parser
 
-            parser = get_parser(lang)  # type: ignore[arg-type]
+            parser = get_parser(lang)
         except Exception as exc:  # pragma: no cover - grammar load edge case
             logger.warning("code_parser_unavailable", language=lang, error=str(exc))
             return []

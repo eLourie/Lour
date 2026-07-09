@@ -34,8 +34,7 @@ class PdfLoader:
         pages = [page.extract_text() or "" for page in reader.pages]
         content = "\n\n".join(pages).strip()
 
-        info = reader.metadata or {}
-        title = info.title if getattr(info, "title", None) else path.stem
+        title = getattr(reader.metadata, "title", None) or path.stem
 
         return LoadedDocument(
             content=content,
