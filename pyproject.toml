@@ -35,6 +35,7 @@ dependencies = [
     # LangGraph (orchestration — Phase 5, but declared early)
     "langgraph>=0.2.50",
     "langgraph-checkpoint-postgres>=2.0.0",
+    "jinja2>=3.1.0",                    # versioned agent prompt templates (Phase 5)
     # Tools layer (Phase 3)
     "mcp>=1.1.0",                       # Model Context Protocol — client + server
     "docker>=7.1.0",                    # code-exec sandbox (docker-py, sync → to_thread)
