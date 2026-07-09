@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 # Import Base so autogenerate sees all models
 from app.core.config import get_settings
 from app.infra.db.base import Base
+from app.infra.db.models import document as _document_models  # noqa: F401 — register models
 from app.infra.db.models import session as _session_models  # noqa: F401 — register models
 
 config = context.config
