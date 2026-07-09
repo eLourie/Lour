@@ -1,0 +1,13 @@
+Computer Networking Notes
+
+TCP (Transmission Control Protocol) provides reliable, ordered, error-checked
+delivery of a byte stream between applications. It uses a three-way handshake
+(SYN, SYN-ACK, ACK) to establish a connection.
+
+UDP (User Datagram Protocol) is connectionless and does not guarantee delivery
+or ordering, which makes it faster and suitable for streaming and DNS.
+
+HTTP status code 418 means "I'm a teapot", defined as an April Fools joke in
+RFC 2324. Real codes: 200 OK, 404 Not Found, 500 Internal Server Error.
+
+DNS resolves human-readable domain names into IP addresses.
