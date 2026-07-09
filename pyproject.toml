@@ -162,6 +162,13 @@ module = [
 ]
 ignore_missing_imports = true
 
+# LangGraph graph-assembly: its StateGraph.add_node overloads and the generic
+# CompiledStateGraph don't resolve under --strict (a known upstream typing gap).
+# Scope the relaxation to the assembly modules only; nodes/state stay strict.
+[[tool.mypy.overrides]]
+module = ["app.agents.graphs.*"]
+disable_error_code = ["call-overload", "type-arg"]
+
 
 # Pytest
 
