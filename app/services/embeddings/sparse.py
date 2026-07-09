@@ -104,6 +104,6 @@ class Bm42SparseEmbeddingService:
 
         def _run() -> SparseVector:
             embeddings: Iterable[Any] = model.query_embed([text])
-            return [_to_sparse_vector(e) for e in embeddings][0]
+            return _to_sparse_vector(next(iter(embeddings)))
 
         return await asyncio.to_thread(_run)
