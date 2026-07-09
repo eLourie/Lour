@@ -1,0 +1,42 @@
+# review_code — critique a snippet, optionally running it, driven by the coder agent.
+# Has a Python override (implementations/review_code.py) that post-processes the result.
+name: review_code
+description: >-
+  Review a code snippet for correctness, bugs and improvements, optionally
+  executing it in the sandbox to verify behaviour, and return concrete
+  suggestions.
+agent: coder
+tools_allowed:
+  - code_exec
+  - fs_ops
+  - rag_query
+
+input_schema:
+  code:
+    type: str
+    required: true
+    description: The source code to review.
+  language:
+    type: str
+    required: false
+    default: python
+    description: The programming language of the snippet.
+
+output_schema:
+  review: str
+
+prompt: >-
+  Review the following {language} code for correctness, bugs and possible
+  improvements. If it helps, run it in the sandbox to verify its behaviour.
+  Give a concise review with concrete, actionable suggestions.
+
+
+  Code:
+
+  {code}
+
+budget:
+  max_cost_tokens: 40000
+  max_iterations: 6
+  max_tool_calls: 10
+requires_confirmation: false
