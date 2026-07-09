@@ -38,6 +38,8 @@ dependencies = [
     # Tools layer (Phase 3)
     "mcp>=1.1.0",                       # Model Context Protocol — client + server
     "docker>=7.1.0",                    # code-exec sandbox (docker-py, sync → to_thread)
+    # Background jobs (Phase 4 — in-process consolidation scheduler, ADR-012)
+    "apscheduler>=3.10.0,<4.0",
     # Observability
     "langfuse>=2.55.0",
     "opentelemetry-api>=1.28.0",
@@ -154,7 +156,8 @@ module = [
     "passlib.*",
     "docker.*",
     "mcp.*",
-    "trafilatura.*"
+    "trafilatura.*",
+    "apscheduler.*",
 ]
 ignore_missing_imports = true
 
