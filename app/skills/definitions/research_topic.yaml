@@ -1,0 +1,38 @@
+# research_topic — deep research with sources, driven by the researcher agent.
+# The researcher subgraph runs plan → act(↻) → reflect, using the web + KB tools.
+name: research_topic
+description: >-
+  Research a topic in depth using web search and the knowledge base, and produce
+  a concise report with key findings and cited sources.
+agent: researcher
+tools_allowed:
+  - web_search
+  - web_fetch
+  - rag_query
+
+input_schema:
+  topic:
+    type: str
+    required: true
+    description: The subject to research.
+  depth:
+    type: str
+    required: false
+    default: quick
+    enum: [quick, deep]
+    description: quick = a brief survey; deep = thorough with more sources.
+
+output_schema:
+  report: str
+
+prompt: >-
+  Research the topic: "{topic}". Depth level: {depth}. Gather information from
+  the available tools (web search, page fetch, knowledge base), then write a
+  concise report of the key findings. Cite the sources you used.
+
+# Per-skill policy (§5.4). allowed_tools is derived from tools_allowed above.
+budget:
+  max_cost_tokens: 50000
+  max_iterations: 8
+  max_duration_s: 300
+requires_confirmation: false

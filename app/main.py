@@ -31,6 +31,10 @@ Phase 4 singletons:
 Phase 5 singletons:
   checkpointer  — CheckpointerManager (AsyncPostgresSaver, resume/replay, ADR-008)
   agent_graph   — compiled supervisor graph (researcher/coder/direct + HITL + SSE)
+
+Phase 6 singletons:
+  skill_registry — SkillRegistry (YAML declarations + optional Python overrides)
+  skill_router   — SkillRouter (free text → one skill, §5.3)
 """
 
 from __future__ import annotations
@@ -60,7 +64,7 @@ from app.gateway.middleware.error_handler import (
 )
 from app.gateway.middleware.logging import AccessLoggingMiddleware
 from app.gateway.middleware.request_id import RequestIDMiddleware
-from app.gateway.routes import chat, health, rag, sessions, tools
+from app.gateway.routes import chat, health, rag, sessions, skills, tools
 from app.infra.clients.ollama import OllamaClient
 from app.infra.clients.postgres import PostgresClient
 from app.infra.clients.qdrant import QdrantClient
@@ -85,6 +89,8 @@ from app.services.rag.query_transform import QueryTransformer
 from app.services.rag.retrieval import HybridRetriever
 from app.services.reranker.local_mps import LocalMPSReranker
 from app.services.sandbox.docker_sandbox import DockerSandbox
+from app.skills.registry import SkillRegistry
+from app.skills.router import SkillRouter
 from app.tools.builtins import build_builtin_tools
 from app.tools.gate import ToolGate
 from app.tools.mcp.adapter import adapt_mcp_tools
@@ -219,7 +225,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     agent_graph = build_graph(graph_deps, checkpointer=saver)
     logger.info("agent_graph_ready")
 
-    # 11. Attach to app.state for DI
+    # 11. Skills layer (Phase 6) — the public catalogue of high-level scenarios.
+    #     The registry discovers YAML declarations (+ optional Python overrides);
+    #     the router classifies free text to one skill (§5.3) using the same
+    #     structured LLM the graph uses. Skills drive the compiled graph above.
+    skill_registry = SkillRegistry().load()
+    skill_router = SkillRouter(skill_registry, structured_llm)
+
+    # 12. Attach to app.state for DI
     app.state.postgres = postgres
     app.state.redis = redis
     app.state.qdrant = qdrant
@@ -240,6 +253,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.consolidation = consolidation
     app.state.checkpointer = checkpointer
     app.state.agent_graph = agent_graph
+    app.state.skill_registry = skill_registry
+    app.state.skill_router = skill_router
 
     # Legacy alias: health.py (Phase 0) used db_pool name — keep until health.py is updated
     app.state.db_pool = postgres
@@ -300,9 +315,9 @@ def create_app() -> FastAPI:
     app.include_router(tools.router, prefix="/v1")
     app.include_router(chat.router, prefix="/v1")
     app.include_router(sessions.router, prefix="/v1")
+    app.include_router(skills.router, prefix="/v1")
 
     # Later phases add:
-    # app.include_router(skills.router, prefix="/v1")
     # app.include_router(admin.router,  prefix="/v1")
 
     return app

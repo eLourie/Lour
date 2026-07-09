@@ -1,0 +1,38 @@
+# summarize_document — faithful summary of an inline document.
+# Driven by the direct agent: the text is supplied in the request, so no tools
+# are needed (empty allowlist).
+name: summarize_document
+description: >-
+  Summarize a supplied document faithfully, at either short or detailed length,
+  capturing its key points.
+agent: direct
+tools_allowed: []
+
+input_schema:
+  text:
+    type: str
+    required: true
+    description: The document text to summarize.
+  length:
+    type: str
+    required: false
+    default: short
+    enum: [short, detailed]
+    description: short = a few sentences; detailed = a fuller summary.
+
+output_schema:
+  summary: str
+
+prompt: >-
+  Summarize the following document as a {length} summary. Capture the key points
+  faithfully and do not invent details.
+
+
+  Document:
+
+  {text}
+
+budget:
+  max_cost_tokens: 15000
+  max_iterations: 2
+requires_confirmation: false
