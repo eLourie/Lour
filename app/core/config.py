@@ -66,14 +66,15 @@ class AppSettings(BaseSettings):
 
     env: AppEnv = AppEnv.DEVELOPMENT
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    # JSON is the always-on observability baseline (works offline, machine-readable).
+    # Set APP_LOG_FORMAT=console for pretty local-dev output.
+    log_format: Literal["json", "console"] = "json"
     api_key: str = Field(default="changeme-user", description="User API key")
     admin_api_key: str = Field(default="changeme-admin", description="Admin API key")
     auth_mode: AuthMode = AuthMode.APIKEY
 
 
 class LLMSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="LLM_", env_file=".env", extra="ignore")
-
     provider: LLMProvider = LLMProvider.OLLAMA
     main_model: str = "qwen3:14b"
     fast_model: str = ""  # empty = main model routes itself
@@ -99,8 +100,6 @@ class OllamaSettings(BaseSettings):
 
 
 class RerankerSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="RERANKER_", env_file=".env", extra="ignore")
-
     mode: RerankerMode = RerankerMode.LOCAL
     model: str = "bge-reranker-v2-m3"
     base_url: str = "http://host.docker.internal:8081"
@@ -165,8 +164,6 @@ class QdrantSettings(BaseSettings):
 
 
 class TelemetrySettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="LANGFUSE_", env_file=".env", extra="ignore")
-
     backend: TelemetryBackend = Field(
         default=TelemetryBackend.LANGFUSE_CLOUD,
         alias="TELEMETRY_BACKEND",
