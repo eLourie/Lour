@@ -15,6 +15,9 @@ import time
 from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 
+from app.core.config import LLMProvider as LLMProviderEnum
+from app.core.config import get_settings
+
 router = APIRouter(tags=["health"])
 
 
@@ -69,13 +72,15 @@ async def readiness(request: Request) -> JSONResponse:
         checks["qdrant"] = "not_initialised"
         healthy = False
 
-    # Ollama (optional in cloud-provider mode — warn, don't fail readiness)
+    # Ollama — hard dependency only when it is the active LLM provider.
+    # In cloud-provider mode Ollama is still used for local embeddings, so an
+    # outage there is a warning (degraded), not a readiness failure.
     ollama = getattr(request.app.state, "ollama", None)
     if ollama is not None:
         ok = await ollama.ping()
         checks["ollama"] = "ok" if ok else "unreachable"
-        # Ollama unreachable is a warning, not a hard failure:
-        # cloud provider mode runs without it.
+        if not ok and get_settings().llm.provider == LLMProviderEnum.OLLAMA:
+            healthy = False
     else:
         checks["ollama"] = "not_used"  # cloud provider path
 
