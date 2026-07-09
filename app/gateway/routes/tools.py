@@ -15,11 +15,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.di import get_state
 from app.core.exceptions import NotFoundError
+from app.gateway.middleware.rate_limit import default_limit, limiter
 from app.tools.schema import to_ollama_schema
 
 if TYPE_CHECKING:
@@ -55,7 +56,12 @@ def _info(tool: Any) -> ToolInfo:
 
 
 @router.get("", response_model=ToolListResponse)
-async def list_tools(registry: RegistryDep) -> ToolListResponse:
+@limiter.limit(default_limit)  # general-purpose default budget (see rate_limit.py)
+async def list_tools(
+    registry: RegistryDep,
+    request: Request,
+    response: Response,  # slowapi injects rate-limit headers here
+) -> ToolListResponse:
     """List all registered tools (builtins + MCP adapters)."""
     tools = sorted(registry.all(), key=lambda t: t.name)
     return ToolListResponse(count=len(tools), tools=[_info(t) for t in tools])
