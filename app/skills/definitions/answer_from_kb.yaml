@@ -1,0 +1,31 @@
+# answer_from_kb — grounded Q&A over the personal knowledge base (RAG).
+# Driven by the researcher agent restricted to the rag_query tool only.
+name: answer_from_kb
+description: >-
+  Answer a question using only the personal knowledge base, retrieving and
+  citing relevant context, and admitting when the answer is not present.
+agent: researcher
+tools_allowed:
+  - rag_query
+
+input_schema:
+  question:
+    type: str
+    required: true
+    description: The question to answer from the knowledge base.
+
+output_schema:
+  answer: str
+
+prompt: >-
+  Answer the following question using ONLY the knowledge base. Use the rag_query
+  tool to retrieve relevant context and cite it. If the knowledge base does not
+  contain the answer, say so plainly rather than guessing.
+
+
+  Question: {question}
+
+budget:
+  max_cost_tokens: 20000
+  max_iterations: 4
+requires_confirmation: false
