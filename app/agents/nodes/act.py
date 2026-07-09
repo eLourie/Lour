@@ -26,10 +26,10 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
-from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
 
 from app.agents.state import PendingApproval, ToolCallRecord
+from app.agents.stream import emit as _emit
 from app.core.logging import get_logger
 
 if TYPE_CHECKING:
@@ -49,15 +49,6 @@ _ACT_OPTIONS = {"temperature": 0.0}
 # Cap a tool result folded back into the transcript so a huge payload cannot
 # blow the context window.
 _MAX_TOOL_CONTENT = 8000
-
-
-def _emit(event: str, **data: Any) -> None:
-    """Best-effort custom stream event (no-op outside a streaming run)."""
-    try:
-        writer = get_stream_writer()
-    except Exception:  # pragma: no cover - defensive; writer absent off-stream
-        return
-    writer({"event": event, **data})
 
 
 def _assistant_message(content: str, tool_calls: list[dict[str, Any]]) -> LLMMessage:
