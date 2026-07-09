@@ -10,9 +10,13 @@ we just mark the reranker as unavailable and skip reranking when called.
 
 from __future__ import annotations
 
-from app.core.config import RerankerSettings
+from typing import TYPE_CHECKING
+
 from app.core.logging import get_logger
 from app.infra.clients.reranker import RerankerClient, RerankerError
+
+if TYPE_CHECKING:
+    from app.core.config import RerankerSettings
 
 logger = get_logger(__name__)
 

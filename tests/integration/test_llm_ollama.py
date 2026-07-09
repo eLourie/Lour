@@ -18,7 +18,6 @@ from pydantic import BaseModel
 
 from app.core.config import get_settings
 from app.infra.clients.ollama import OllamaClient
-from app.services.llm.factory import build_llm_provider
 from app.services.llm.structured import StructuredOutputService
 
 pytestmark = pytest.mark.integration

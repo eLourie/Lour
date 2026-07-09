@@ -11,14 +11,16 @@ providers are not used for embeddings (we use local bge-m3 for that).
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from app.core.config import LLMProvider as LLMProviderEnum
 from app.core.config import LLMSettings
 from app.core.exceptions import LLMError
 from app.core.logging import get_logger
 from app.services.llm.base import LLMMessage, LLMResponse, StreamChunk
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = get_logger(__name__)
 
@@ -33,7 +35,7 @@ class AnthropicProvider:
 
     def __init__(self, settings: LLMSettings) -> None:
         try:
-            import anthropic  # type: ignore[import-untyped]
+            import anthropic
 
             self._client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
         except ImportError as exc:
@@ -66,7 +68,7 @@ class AnthropicProvider:
         if tools:
             kwargs["tools"] = tools
 
-        import anthropic  # type: ignore[import-untyped]
+        import anthropic
 
         try:
             response = await self._client.messages.create(**kwargs)
@@ -108,7 +110,7 @@ class OpenAIProvider:
 
     def __init__(self, settings: LLMSettings) -> None:
         try:
-            import openai  # type: ignore[import-untyped]
+            import openai
 
             self._client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
         except ImportError as exc:
@@ -122,7 +124,7 @@ class OpenAIProvider:
         tools: list[dict[str, Any]] | None = None,
         options: dict[str, Any] | None = None,
     ) -> LLMResponse:
-        import openai  # type: ignore[import-untyped]
+        import openai
 
         kwargs: dict[str, Any] = {
             "model": self._model,

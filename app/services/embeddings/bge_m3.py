@@ -6,7 +6,10 @@ Dense embedding service using bge-m3 via Ollama (1024 dimensions).
 
 from __future__ import annotations
 
-from app.infra.clients.ollama import OllamaClient
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.infra.clients.ollama import OllamaClient
 
 
 class BgeM3EmbeddingService:

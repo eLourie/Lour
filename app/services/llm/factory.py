@@ -31,9 +31,13 @@ def build_llm_provider(
     match llm_settings.provider:
         case LLMProviderEnum.OLLAMA:
             client = OllamaClient(ollama_settings)
-            return OllamaProvider(client, llm_settings)
+            ollama_provider = OllamaProvider(client, llm_settings)
+            assert isinstance(ollama_provider, LLMProvider)  # noqa: S101
+            return ollama_provider
         case LLMProviderEnum.ANTHROPIC | LLMProviderEnum.OPENAI:
-            return build_cloud_provider(llm_settings)
+            cloud_provider = build_cloud_provider(llm_settings)
+            assert isinstance(cloud_provider, LLMProvider)  # noqa: S101
+            return cloud_provider
         case _:
             raise LLMError(
                 f"Unsupported LLM_PROVIDER={llm_settings.provider!r}. "

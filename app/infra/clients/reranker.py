@@ -11,11 +11,15 @@ The service is expected to expose a simple POST /rerank endpoint:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import httpx
 
-from app.core.config import RerankerSettings
 from app.core.exceptions import AppError
 from app.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from app.core.config import RerankerSettings
 
 logger = get_logger(__name__)
 

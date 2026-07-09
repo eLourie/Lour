@@ -7,8 +7,8 @@ Two engines: main app DB and LangGraph checkpoint DB (separate database).
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -17,8 +17,12 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.core.config import PostgresSettings
 from app.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from app.core.config import PostgresSettings
 
 logger = get_logger(__name__)
 

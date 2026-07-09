@@ -12,18 +12,21 @@ Why Repository pattern here?
 
 from __future__ import annotations
 
-from typing import Any, Generic, TypeVar
-from uuid import UUID
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infra.db.base import Base
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 ModelT = TypeVar("ModelT", bound=Base)
 
 
-class Repository(Generic[ModelT]):
+class Repository[ModelT: Base]:
     """
     Base repository with typed CRUD for a single SQLAlchemy model.
 
@@ -48,7 +51,7 @@ class Repository(Generic[ModelT]):
         """Fetch by primary key; return None if not found."""
         return await self._session.get(self.model, id)
 
-    async def get_by(self, **kwargs: Any) -> ModelT | None:  # noqa: ANN401
+    async def get_by(self, **kwargs: Any) -> ModelT | None:
         """Fetch first row matching all given column=value filters."""
         stmt = select(self.model).filter_by(**kwargs)
         result = await self._session.execute(stmt)

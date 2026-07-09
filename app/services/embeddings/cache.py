@@ -11,10 +11,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+from typing import TYPE_CHECKING
 
 from app.core.logging import get_logger
-from app.infra.clients.redis import RedisClient
-from app.services.embeddings.base import EmbeddingProvider
+
+if TYPE_CHECKING:
+    from app.infra.clients.redis import RedisClient
+    from app.services.embeddings.base import EmbeddingProvider
 
 logger = get_logger(__name__)
 

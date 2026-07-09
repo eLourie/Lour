@@ -12,13 +12,16 @@ Pattern:
 
 from __future__ import annotations
 
-from types import TracebackType
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.infra.clients.postgres import PostgresClient
 from app.infra.db.repositories.session_repo import SessionRepository
+
+if TYPE_CHECKING:
+    from types import TracebackType
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.infra.clients.postgres import PostgresClient
 
 
 class UnitOfWork:
@@ -47,7 +50,7 @@ class UnitOfWork:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        assert self._session is not None  # noqa: S101 — guaranteed by __aenter__
+        assert self._session is not None
         if exc_type is None:
             await self._session.commit()
         else:

@@ -7,13 +7,16 @@ Handles native function calling, token streaming and embedding.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from app.core.config import LLMSettings
 from app.core.logging import get_logger
-from app.infra.clients.ollama import OllamaClient
 from app.services.llm.base import LLMMessage, LLMResponse, StreamChunk
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from app.core.config import LLMSettings
+    from app.infra.clients.ollama import OllamaClient
 
 logger = get_logger(__name__)
 

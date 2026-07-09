@@ -11,13 +11,15 @@ This is the "retry-with-feedback" pattern referenced in ADR-007.
 from __future__ import annotations
 
 import json
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
 from app.core.exceptions import LLMError
 from app.core.logging import get_logger
-from app.services.llm.base import LLMMessage, LLMProvider
+
+if TYPE_CHECKING:
+    from app.services.llm.base import LLMMessage, LLMProvider
 
 logger = get_logger(__name__)
 
@@ -103,7 +105,11 @@ class StructuredOutputService:
                             "Please respond again with a valid JSON object matching the schema."
                         ),
                     }
-                    full_messages = [*full_messages, {"role": "assistant", "content": raw}, feedback_msg]
+                    full_messages = [
+                        *full_messages,
+                        {"role": "assistant", "content": raw},
+                        feedback_msg,
+                    ]
 
         raise LLMError(
             f"Structured output failed after {MAX_RETRIES + 1} attempts "

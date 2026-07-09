@@ -8,15 +8,18 @@ Handles retries, timeouts, and raw streaming — no business logic here.
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from app.core.config import OllamaSettings
 from app.core.exceptions import LLMError
 from app.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from app.core.config import OllamaSettings
 
 logger = get_logger(__name__)
 

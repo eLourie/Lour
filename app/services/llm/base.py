@@ -12,10 +12,12 @@ Why Protocol (not ABC)?
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 # Type alias for a single LLM message
 LLMMessage = dict[str, Any]
@@ -49,6 +51,12 @@ class LLMProvider(Protocol):
     Implementations live in:
         app/services/llm/ollama_provider.py
         app/services/llm/cloud_provider.py
+
+    Note on stream():
+        Defined as a regular (non-async) method returning AsyncGenerator —
+        because async generator functions, when called, return an
+        AsyncGenerator object (not a coroutine). Protocol must match
+        what the caller actually receives at call time.
     """
 
     async def chat(
@@ -61,13 +69,13 @@ class LLMProvider(Protocol):
         """Single-turn, non-streaming completion."""
         ...
 
-    async def stream(
+    def stream(
         self,
         messages: list[LLMMessage],
         *,
         options: dict[str, Any] | None = None,
-    ) -> AsyncIterator[StreamChunk]:
-        """Token-by-token streaming completion."""
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """Token-by-token streaming — returns an async generator."""
         ...
 
     async def embed(self, texts: list[str]) -> list[list[float]]:

@@ -7,17 +7,20 @@ Named vectors are used so dense + sparse can live in one collection.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import (
     Distance,
     SparseIndexParams,
     SparseVectorParams,
     VectorParams,
-    VectorsConfig,
 )
 
-from app.core.config import QdrantSettings
 from app.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from app.core.config import QdrantSettings
 
 logger = get_logger(__name__)
 

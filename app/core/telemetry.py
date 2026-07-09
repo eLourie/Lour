@@ -14,10 +14,12 @@ from __future__ import annotations
 
 import functools
 import time
-from collections.abc import Callable, Coroutine
-from typing import Any, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from app.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
 
 logger = get_logger(__name__)
 
@@ -26,12 +28,12 @@ R = TypeVar("R")
 
 # Module-level reference; set once during lifespan startup.
 # If None, all decorators are no-ops.
-_telemetry_client: Any = None  # type: ignore[assignment]
+_telemetry_client: Any = None
 
 
-def set_telemetry_client(client: Any) -> None:  # noqa: ANN401
+def set_telemetry_client(client: Any) -> None:
     """Called from lifespan after the client is built."""
-    global _telemetry_client  # noqa: PLW0603
+    global _telemetry_client
     _telemetry_client = client
 
 

@@ -7,10 +7,14 @@ Exposes three pre-wired clients for cache / memory / rate-limit DBs.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import redis.asyncio as aioredis
 
-from app.core.config import RedisSettings
 from app.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from app.core.config import RedisSettings
 
 logger = get_logger(__name__)
 
@@ -62,6 +66,6 @@ class RedisClient:
             return False
 
     async def aclose(self) -> None:
-        await self.cache.aclose()
-        await self.memory.aclose()
-        await self.rate_limit.aclose()
+        await self.cache.close()
+        await self.memory.close()
+        await self.rate_limit.close()
