@@ -46,9 +46,18 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "fastembed>=0.4.0",
     "greenlet>=3.5.3",
+    # RAG loaders (Phase 2)
+    "pypdf>=5.1.0",                     # PDF text extraction
+    "trafilatura>=1.12.0",             # readable content extraction from URLs
+    "tree-sitter>=0.23.0",            # code parsing (symbol-boundary chunking)
+    "tree-sitter-language-pack>=0.4.0",  # prebuilt grammars for tree-sitter
 ]
 
 [project.optional-dependencies]
+# Evaluation stack (heavy — installed only for eval runs, not on every sync)
+eval = [
+    "ragas>=0.2.0",
+]
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
