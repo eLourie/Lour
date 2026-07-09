@@ -12,7 +12,7 @@ Why Repository pattern here?
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 
@@ -22,8 +22,6 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from sqlalchemy.ext.asyncio import AsyncSession
-
-ModelT = TypeVar("ModelT", bound=Base)
 
 
 class Repository[ModelT: Base]:

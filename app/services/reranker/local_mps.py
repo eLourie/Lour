@@ -12,11 +12,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from app.core.exceptions import RerankerError
 from app.core.logging import get_logger
-from app.infra.clients.reranker import RerankerClient, RerankerError
 
 if TYPE_CHECKING:
     from app.core.config import RerankerSettings
+    from app.infra.clients.reranker import RerankerClient
 
 logger = get_logger(__name__)
 

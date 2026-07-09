@@ -10,6 +10,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -93,7 +94,7 @@ class PostgresClient:
         """Return True if the main DB is reachable."""
         try:
             async with self.engine.connect() as conn:
-                await conn.execute(__import__("sqlalchemy").text("SELECT 1"))
+                await conn.execute(text("SELECT 1"))
             return True
         except Exception:
             logger.exception("Postgres ping failed")

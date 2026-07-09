@@ -15,17 +15,13 @@ from typing import TYPE_CHECKING
 
 import httpx
 
-from app.core.exceptions import AppError
+from app.core.exceptions import RerankerError
 from app.core.logging import get_logger
 
 if TYPE_CHECKING:
     from app.core.config import RerankerSettings
 
 logger = get_logger(__name__)
-
-
-class RerankerError(AppError):
-    """Raised when the rerank service returns an error."""
 
 
 class RerankerClient:
