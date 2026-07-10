@@ -61,9 +61,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Evaluation stack (heavy — installed only for eval runs, not on every sync)
+# Evaluation stack (heavy — installed only for eval runs, not on every sync).
+# langchain-ollama gives ragas a local judge LLM + embeddings so faithfulness /
+# answer-relevancy run against the Ollama path; absent it, the quality pass
+# skips cleanly and only the always-on recall gate applies.
 eval = [
     "ragas>=0.2.0",
+    "langchain-ollama>=0.2.0",
 ]
 dev = [
     "pytest>=8.3.0",
