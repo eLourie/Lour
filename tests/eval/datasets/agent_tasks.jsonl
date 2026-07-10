@@ -1,0 +1,5 @@
+{"id": "code-sum", "query": "Use Python to compute the sum of all integers from 1 to 100 and print only the number.", "expect_keywords": ["5050"], "expect_agent": "coder"}
+{"id": "code-reverse", "query": "Write and run Python that reverses the string 'hello' and prints the result.", "expect_keywords": ["olleh"], "expect_agent": "coder"}
+{"id": "code-fib", "query": "Use Python to compute the 10th Fibonacci number (starting 1, 1) and print only the number.", "expect_keywords": ["55"], "expect_agent": "coder"}
+{"id": "direct-capital", "query": "What is the capital of France? Answer with just the city name.", "expect_keywords": ["Paris"], "expect_agent": null}
+{"id": "direct-echo", "query": "Reply with exactly this word and nothing else: BANANA", "expect_keywords": ["BANANA"], "expect_agent": null}
