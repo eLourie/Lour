@@ -24,6 +24,7 @@ import pytest
 
 from app.agents.graphs.builder import initial_state
 from app.main import create_app, lifespan
+from tests.eval.datasets import load_jsonl
 
 pytestmark = pytest.mark.eval
 
@@ -37,6 +38,19 @@ class Task:
     query: str
     expect_keywords: tuple[str, ...] = ()
     expect_agent: str | None = None
+
+
+def _load_tasks() -> tuple[Task, ...]:
+    """Read the benchmark tasks from the versioned JSONL dataset."""
+    return tuple(
+        Task(
+            id=row["id"],
+            query=row["query"],
+            expect_keywords=tuple(row.get("expect_keywords", ())),
+            expect_agent=row.get("expect_agent"),
+        )
+        for row in load_jsonl("agent_tasks")
+    )
 
 
 @dataclass
@@ -72,33 +86,7 @@ class BenchmarkReport:
         return sum(1 for r in judged if r.routed_as_expected) / len(judged)
 
 
-BENCHMARK_TASKS: tuple[Task, ...] = (
-    Task(
-        id="code-sum",
-        query=(
-            "Use Python to compute the sum of all integers from 1 to 100 "
-            "and print only the number."
-        ),
-        expect_keywords=("5050",),
-        expect_agent="coder",
-    ),
-    Task(
-        id="code-reverse",
-        query="Write and run Python that reverses the string 'hello' and prints the result.",
-        expect_keywords=("olleh",),
-        expect_agent="coder",
-    ),
-    Task(
-        id="direct-capital",
-        query="What is the capital of France? Answer with just the city name.",
-        expect_keywords=("Paris",),
-    ),
-    Task(
-        id="direct-echo",
-        query="Reply with exactly this word and nothing else: BANANA",
-        expect_keywords=("BANANA",),
-    ),
-)
+BENCHMARK_TASKS: tuple[Task, ...] = _load_tasks()
 
 
 def _judge(task: Task, answer: str) -> bool:
