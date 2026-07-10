@@ -62,7 +62,12 @@ class DeployProfile(StrEnum):
 
 
 class AppSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="APP_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="APP_",
+        env_file=".env",
+        extra="ignore",
+        populate_by_name=True,
+    )
 
     env: AppEnv = AppEnv.DEVELOPMENT
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
@@ -71,7 +76,9 @@ class AppSettings(BaseSettings):
     log_format: Literal["json", "console"] = "json"
     api_key: str = Field(default="changeme-user", description="User API key")
     admin_api_key: str = Field(default="changeme-admin", description="Admin API key")
-    auth_mode: AuthMode = AuthMode.APIKEY
+    # auth_mode has no APP_ prefix in .env (it is the bare AUTH_MODE var), so bind
+    # it explicitly. populate_by_name keeps the field usable by its Python name too.
+    auth_mode: AuthMode = Field(default=AuthMode.APIKEY, alias="AUTH_MODE")
 
 
 class LLMSettings(BaseSettings):
@@ -251,6 +258,57 @@ class ToolsSettings(BaseSettings):
         return v
 
 
+class GatewaySettings(BaseSettings):
+    """
+    Gateway-hardening knobs (Phase 7): rate limiting, CORS and JWT (showcase).
+
+    Security in variant A (single-user instance) = API key + network isolation
+    (localhost / Tailscale) + TLS when exposed — not the token format (§9.2).
+    These settings tune the enforcement points, all off a single .env.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="GATEWAY_",
+        env_file=".env",
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    # ── Rate limiting (Redis fixed-window, per-route budgets) ──────────────
+    rate_limit_enabled: bool = True
+    rate_limit_window_s: int = 60
+    # Requests per window. Chat/agent turns are expensive → tighter than reads;
+    # ingestion is heavy and bursty → its own budget (see _bucket_for in
+    # gateway/middleware/rate_limit.py).
+    rate_limit_default: int = 120
+    rate_limit_chat: int = 30
+    rate_limit_ingest: int = 10
+
+    # ── CORS ───────────────────────────────────────────────────────────────
+    # Comma-separated origins in env. Empty (default) = no cross-origin access,
+    # the safe default for a personal, network-isolated instance.
+    cors_allow_origins: list[str] = Field(default_factory=list)
+    cors_allow_credentials: bool = False
+
+    # ── Security headers ─────────────────────────────────────────────────
+    # HSTS only makes sense behind TLS; off by default (local/Tailscale plaintext).
+    hsts_enabled: bool = False
+    hsts_max_age: int = 31_536_000  # 1 year
+
+    # ── JWT (showcase, AUTH_MODE=jwt) ─────────────────────────────────────
+    jwt_secret: str = Field(default="changeme-jwt-secret", alias="JWT_SECRET")
+    jwt_algorithm: str = "HS256"
+    jwt_expiry_s: int = 3600
+
+    @field_validator("cors_allow_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, v: object) -> object:
+        # Accept a comma-separated string from env; pass lists through untouched.
+        if isinstance(v, str):
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v
+
+
 class McpSettings(BaseSettings):
     """External MCP servers this instance connects to as a client (ADR-006)."""
 
@@ -304,6 +362,7 @@ class Settings(BaseSettings):
     sandbox: SandboxSettings = Field(default_factory=SandboxSettings)
     tools: ToolsSettings = Field(default_factory=ToolsSettings)
     mcp: McpSettings = Field(default_factory=McpSettings)
+    gateway: GatewaySettings = Field(default_factory=GatewaySettings)
 
     @field_validator("deploy_profile", mode="before")
     @classmethod

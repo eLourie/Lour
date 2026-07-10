@@ -11,9 +11,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request, Response
 
 from app.core.di import get_state
+from app.gateway.middleware.rate_limit import ingest_limit, limiter
 from app.infra.db.unit_of_work import UnitOfWork
 from app.schemas.rag import (
     DocumentDTO,
@@ -39,7 +40,13 @@ PostgresDep = Annotated["PostgresClient", Depends(get_state("postgres"))]
 
 
 @router.post("/ingest", response_model=IngestResponse)
-async def ingest(req: IngestRequest, pipeline: IngestionDep) -> IngestResponse:
+@limiter.limit(ingest_limit)
+async def ingest(
+    req: IngestRequest,
+    request: Request,
+    response: Response,  # slowapi injects rate-limit headers here (headers_enabled)
+    pipeline: IngestionDep,
+) -> IngestResponse:
     """Ingest a source (file/URL) or raw text into the corpus."""
     if req.source is not None:
         result = await pipeline.ingest_source(req.source, force=req.force)

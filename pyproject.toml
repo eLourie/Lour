@@ -123,6 +123,7 @@ ignore = [
 "migrations/**" = ["ANN", "N999"]
 # Starlette middleware signatures require runtime presence of Request/Response/ASGIApp
 "app/gateway/middleware/**" = ["TC001", "TC002"]
+"app/gateway/security.py" = ["TC001", "TC002"]
 # FastAPI route handlers need runtime access to annotations (Request, request/
 # response DTOs), so imports must stay out of the type-checking block.
 "app/gateway/routes/**" = ["TC001", "TC002", "PLC0415"]

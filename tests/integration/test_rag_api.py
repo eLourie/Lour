@@ -20,6 +20,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
+from app.core.config import get_settings
 from app.main import create_app, lifespan
 
 pytestmark = pytest.mark.integration
@@ -30,7 +31,11 @@ async def client() -> AsyncIterator[AsyncClient]:
     app = create_app()
     async with lifespan(app):
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        # Phase 7: the gateway now requires an API key on /v1/* routes.
+        headers = {"X-API-Key": get_settings().app.api_key}
+        async with AsyncClient(
+            transport=transport, base_url="http://test", headers=headers
+        ) as ac:
             yield ac
 
 

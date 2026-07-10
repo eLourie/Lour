@@ -48,6 +48,7 @@ if TYPE_CHECKING:
 import structlog
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from slowapi.errors import RateLimitExceeded
 
 from app.agents.checkpointing import CheckpointerManager
 from app.agents.deps import GraphDeps
@@ -57,14 +58,17 @@ from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.core.logging import configure_logging
 from app.core.telemetry import set_telemetry_client
+from app.gateway.middleware.auth import AuthMiddleware
 from app.gateway.middleware.error_handler import (
     app_error_handler,
     unhandled_exception_handler,
     validation_error_handler,
 )
 from app.gateway.middleware.logging import AccessLoggingMiddleware
+from app.gateway.middleware.rate_limit import limiter, rate_limit_exceeded_handler
 from app.gateway.middleware.request_id import RequestIDMiddleware
-from app.gateway.routes import chat, health, rag, sessions, skills, tools
+from app.gateway.routes import admin, chat, health, rag, sessions, skills, tools
+from app.gateway.security import SecurityHeadersMiddleware, configure_cors
 from app.infra.clients.ollama import OllamaClient
 from app.infra.clients.postgres import PostgresClient
 from app.infra.clients.qdrant import QdrantClient
@@ -300,9 +304,29 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Middleware (order matters — outermost added last)
+    # Rate limiting (slowapi): the limiter singleton is enforced through the
+    # per-route @limiter.limit decorators (routes/chat.py, rag.py, tools.py). We
+    # deliberately do NOT mount SlowAPIMiddleware: its default-limit path resolves
+    # the endpoint via app.routes, which this FastAPI version keeps as lazy
+    # _IncludedRouter wrappers, so it can't see /v1/* handlers. Decorators enforce
+    # in-call and are unaffected. Register the limiter + a uniform JSON 429.
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)  # type: ignore[arg-type]
+
+    # Middleware (order matters — outermost added last, so add inner→outer).
+    # Effective request path (outer → inner):
+    #   CORS → RequestID → AccessLogging → SecurityHeaders → Auth → routes
+    # Rationale:
+    #   • CORS outermost so preflight OPTIONS is answered before auth.
+    #   • RequestID before AccessLogging so every access log carries the id.
+    #   • SecurityHeaders outside Auth so 401/403/429 responses are stamped too.
+    #   • Auth authenticates before the route-level limiter runs, so the limiter
+    #     keys off the authenticated principal and unauth traffic gets 401.
+    app.add_middleware(AuthMiddleware, settings=settings)
+    app.add_middleware(SecurityHeadersMiddleware, settings=settings)
     app.add_middleware(AccessLoggingMiddleware)
     app.add_middleware(RequestIDMiddleware)
+    configure_cors(app, settings.gateway)
 
     # Exception handlers
     app.add_exception_handler(AppError, app_error_handler)  # type: ignore[arg-type]
@@ -316,9 +340,7 @@ def create_app() -> FastAPI:
     app.include_router(chat.router, prefix="/v1")
     app.include_router(sessions.router, prefix="/v1")
     app.include_router(skills.router, prefix="/v1")
-
-    # Later phases add:
-    # app.include_router(admin.router,  prefix="/v1")
+    app.include_router(admin.router, prefix="/v1")
 
     return app
 

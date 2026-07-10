@@ -17,17 +17,20 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import LLMProvider as LLMProviderEnum
 from app.core.config import get_settings
+from app.gateway.middleware.rate_limit import limiter
 
 router = APIRouter(tags=["health"])
 
 
 @router.get("/healthz", status_code=status.HTTP_200_OK)
+@limiter.exempt  # type: ignore[untyped-decorator]  # slowapi exempt() is untyped
 async def liveness() -> dict[str, str]:
     """Process is alive."""
     return {"status": "ok"}
 
 
 @router.get("/readyz")
+@limiter.exempt  # type: ignore[untyped-decorator]  # slowapi exempt() is untyped
 async def readiness(request: Request) -> JSONResponse:
     """
     Check all backing-service dependencies.
