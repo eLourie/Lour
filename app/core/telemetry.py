@@ -17,6 +17,7 @@ import time
 from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from app.core.logging import get_logger
+from app.core.metrics import get_metrics
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine
@@ -62,6 +63,7 @@ def traced(
                 result = await func(*args, **kwargs)
                 elapsed = time.perf_counter() - start
                 logger.debug("span_ok", span=span_name, elapsed_ms=round(elapsed * 1000, 1))
+                get_metrics().record_latency(span_name, elapsed * 1000)
                 if _telemetry_client is not None:
                     _telemetry_client.trace(span_name, latency_ms=elapsed * 1000)
                 return result
