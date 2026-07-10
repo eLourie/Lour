@@ -1,0 +1,16 @@
+{"text": "Research the history of the Rust programming language with sources.", "expected": "research_topic"}
+{"text": "Do a deep dive on transformer architectures and cite papers.", "expected": "research_topic"}
+{"text": "Give me an in-depth report on renewable energy trends.", "expected": "research_topic"}
+{"text": "Investigate the causes of the 2008 financial crisis with references.", "expected": "research_topic"}
+{"text": "Review this Python function for bugs and suggest improvements.", "expected": "review_code"}
+{"text": "Can you check my code for correctness and run it?", "expected": "review_code"}
+{"text": "Look over this snippet and tell me what's wrong with it.", "expected": "review_code"}
+{"text": "Audit this function for edge-case bugs and style issues.", "expected": "review_code"}
+{"text": "What does my knowledge base say about our deployment process?", "expected": "answer_from_kb"}
+{"text": "Using only my documents, what is the retention policy?", "expected": "answer_from_kb"}
+{"text": "Answer from the knowledge base: who owns the billing service?", "expected": "answer_from_kb"}
+{"text": "According to my notes, what is the on-call escalation path?", "expected": "answer_from_kb"}
+{"text": "Summarize this document into a few short sentences.", "expected": "summarize_document"}
+{"text": "Give me a detailed summary of the text below.", "expected": "summarize_document"}
+{"text": "Condense this article into its key points.", "expected": "summarize_document"}
+{"text": "Give me the TL;DR of the following report.", "expected": "summarize_document"}
