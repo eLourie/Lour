@@ -17,6 +17,7 @@ from app.core.config import LLMProvider as LLMProviderEnum
 from app.core.config import LLMSettings
 from app.core.exceptions import LLMError
 from app.core.logging import get_logger
+from app.core.metrics import get_metrics
 from app.services.llm.base import LLMMessage, LLMResponse, StreamChunk
 
 if TYPE_CHECKING:
@@ -83,6 +84,12 @@ class AnthropicProvider:
             elif block.type == "tool_use":
                 tool_calls.append({"name": block.name, "arguments": block.input})
 
+        get_metrics().record_llm(
+            "anthropic",
+            response.model,
+            response.usage.input_tokens,
+            response.usage.output_tokens,
+        )
         return LLMResponse(
             content=content,
             tool_calls=tool_calls,
@@ -156,11 +163,14 @@ class OpenAIProvider:
                 )
 
         usage = response.usage
+        prompt_tokens = usage.prompt_tokens if usage else 0
+        completion_tokens = usage.completion_tokens if usage else 0
+        get_metrics().record_llm("openai", response.model, prompt_tokens, completion_tokens)
         return LLMResponse(
             content=content,
             tool_calls=tool_calls,
-            prompt_tokens=usage.prompt_tokens if usage else 0,
-            completion_tokens=usage.completion_tokens if usage else 0,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
             model=response.model,
         )
 

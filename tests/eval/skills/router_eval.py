@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 import pytest
 
 from app.main import create_app, lifespan
+from tests.eval.datasets import load_jsonl
 
 pytestmark = pytest.mark.eval
 
@@ -34,22 +35,10 @@ class RoutingCase:
     expected: str
 
 
-# Labelled set — a few unambiguous examples per skill.
-ROUTING_CASES: tuple[RoutingCase, ...] = (
-    RoutingCase(
-        "Research the history of the Rust programming language with sources.", "research_topic"
-    ),
-    RoutingCase("Do a deep dive on transformer architectures and cite papers.", "research_topic"),
-    RoutingCase("Give me an in-depth report on renewable energy trends.", "research_topic"),
-    RoutingCase("Review this Python function for bugs and suggest improvements.", "review_code"),
-    RoutingCase("Can you check my code for correctness and run it?", "review_code"),
-    RoutingCase("Look over this snippet and tell me what's wrong with it.", "review_code"),
-    RoutingCase("What does my knowledge base say about our deployment process?", "answer_from_kb"),
-    RoutingCase("Using only my documents, what is the retention policy?", "answer_from_kb"),
-    RoutingCase("Answer from the knowledge base: who owns the billing service?", "answer_from_kb"),
-    RoutingCase("Summarize this document into a few short sentences.", "summarize_document"),
-    RoutingCase("Give me a detailed summary of the text below.", "summarize_document"),
-    RoutingCase("Condense this article into its key points.", "summarize_document"),
+# Labelled set — loaded from the versioned JSONL dataset (a few unambiguous
+# examples per skill). Grow the suite by editing the dataset, not this module.
+ROUTING_CASES: tuple[RoutingCase, ...] = tuple(
+    RoutingCase(row["text"], row["expected"]) for row in load_jsonl("skill_routing")
 )
 
 

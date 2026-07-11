@@ -28,6 +28,7 @@ from tenacity import (
 
 from app.core.exceptions import ExternalServiceError
 from app.core.logging import get_logger
+from app.core.metrics import get_metrics
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -65,6 +66,7 @@ def audited[F: Callable[..., Awaitable[ToolResult]]](func: F) -> F:
         start = time.perf_counter()
         result = await func(self, *args, **kwargs)
         elapsed_ms = round((time.perf_counter() - start) * 1000, 1)
+        get_metrics().record_tool(name, result.ok)
         logger.info(
             "tool_executed",
             tool=name,

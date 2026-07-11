@@ -1,0 +1,25 @@
+{"question": "What does HTTP 418 mean?", "relevant_id": "http418", "answer": "HTTP 418 means \"I'm a teapot\", a joke status code defined in RFC 2324."}
+{"question": "Which status code is defined in RFC 2324?", "relevant_id": "http418", "answer": "HTTP status code 418 (I'm a teapot) is defined in RFC 2324."}
+{"question": "What is HTTP status code 503?", "relevant_id": "http503", "answer": "HTTP 503 means Service Unavailable, usually due to overload."}
+{"question": "Which HTTP code means Not Found?", "relevant_id": "http404", "answer": "HTTP status code 404 means Not Found."}
+{"question": "Which sorting algorithm does Python's sorted use?", "relevant_id": "timsort", "answer": "Python's sorted uses Timsort, a hybrid of merge and insertion sort."}
+{"question": "Which sort uses a binary heap?", "relevant_id": "heapsort", "answer": "Heap sort uses a binary heap and sorts in place in O(n log n)."}
+{"question": "Which sort is stable with O(n log n) worst case?", "relevant_id": "mergesort", "answer": "Merge sort is a stable divide-and-conquer sort with O(n log n) worst case."}
+{"question": "Which transport protocol is used by HTTP/3?", "relevant_id": "quic", "answer": "HTTP/3 runs over QUIC, a UDP-based transport with built-in TLS."}
+{"question": "Which protocol gives reliable ordered byte delivery?", "relevant_id": "tcp", "answer": "TCP gives reliable, ordered, connection-oriented delivery of a byte stream."}
+{"question": "Which vitamin is cobalamin?", "relevant_id": "vitb12", "answer": "Vitamin B12 is cobalamin; its deficiency causes anaemia."}
+{"question": "Deficiency of which vitamin causes scurvy?", "relevant_id": "vitc", "answer": "Deficiency of vitamin C (ascorbic acid) causes scurvy."}
+{"question": "Who designed the Eiffel Tower?", "relevant_id": "eiffel", "answer": "The Eiffel Tower was designed by Gustave Eiffel and completed in 1889."}
+{"question": "Who discovered penicillin?", "relevant_id": "penicillin", "answer": "Penicillin was discovered by Alexander Fleming in 1928."}
+{"question": "Which algorithm elects a leader to replicate a log?", "relevant_id": "raft", "answer": "The Raft consensus algorithm elects a leader and replicates a log across nodes."}
+{"question": "What EU regulation governs data privacy?", "relevant_id": "gdpr", "answer": "The GDPR is the European Union data-protection regulation, effective from 2018."}
+{"question": "Which vitamin is made in skin from sunlight?", "relevant_id": "vitd", "answer": "Vitamin D is synthesised in the skin from sunlight and regulates calcium."}
+{"question": "What does error QZX-8830 mean?", "relevant_id": "err_net", "answer": "Error code QZX-8830 indicates a network partition between replicas."}
+{"question": "What is error code QZX-1207?", "relevant_id": "err_auth", "answer": "Error code QZX-1207 indicates an authentication token has expired."}
+{"question": "Meaning of error QZX-6642?", "relevant_id": "err_quota", "answer": "Error code QZX-6642 indicates the request exceeded its rate quota."}
+{"question": "Which failure is error QZX-4471?", "relevant_id": "err_disk", "answer": "Error code QZX-4471 indicates a disk failure in the storage subsystem."}
+{"question": "How was support ticket 7734 resolved?", "relevant_id": "ticket_7734", "answer": "Support ticket 7734 was resolved by restarting the affected service."}
+{"question": "How was support ticket 8846 resolved?", "relevant_id": "ticket_8846", "answer": "Support ticket 8846 was resolved by restarting the affected service."}
+{"question": "How was support ticket 3312 resolved?", "relevant_id": "ticket_3312", "answer": "Support ticket 3312 was resolved by restarting the affected service."}
+{"question": "How was support ticket 9951 resolved?", "relevant_id": "ticket_9951", "answer": "Support ticket 9951 was resolved by restarting the affected service."}
+{"question": "How was support ticket 1290 resolved?", "relevant_id": "ticket_1290", "answer": "Support ticket 1290 was resolved by restarting the affected service."}

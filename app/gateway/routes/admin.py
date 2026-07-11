@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Annotated, Any
 from fastapi import APIRouter, Depends, Request
 
 from app.core.config import Settings, get_settings
+from app.core.metrics import get_metrics
 from app.core.security import Principal
 from app.gateway.middleware.auth import require_admin
 
@@ -58,6 +59,7 @@ async def metrics(request: Request, _: AdminDep) -> dict[str, Any]:
             "auth_mode": str(settings.app.auth_mode),
             "reranker_mode": str(settings.reranker.mode),
         },
+        "runtime": get_metrics().snapshot(),
     }
 
 
