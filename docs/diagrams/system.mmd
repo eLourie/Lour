@@ -1,0 +1,43 @@
+%% System architecture — six code layers, backing services and cross-cutting
+%% concerns (PROJECT_CONTEXT §4). Render: `mmdc -i system.mmd -o system.svg`
+%% or paste into https://mermaid.live.
+flowchart TB
+    client["CLIENT — Web UI / CLI / MCP client / API consumer"]:::ctx
+
+    subgraph app["Application (modular monolith)"]
+        direction TB
+        gw["[1] GATEWAY — auth · rate limit · validation · security headers · SSE"]
+        sk["[2] SKILLS — YAML declarations · registry · router (text → skill)"]
+        orch["[3] ORCHESTRATION (LangGraph) — supervisor + sub-agents · checkpointing · HITL · BudgetEnforcer"]
+        tools["[4] TOOLS — registry · ToolGate (allowlist + approval) · sandbox · MCP client/server"]
+        svc["[5] SERVICES — LLM · Embeddings · Reranker · RAG · Memory · Sandbox · Ingestion"]
+        infra["[6] INFRASTRUCTURE — async clients · Repository + Unit of Work"]
+        gw --> sk --> orch --> tools --> svc --> infra
+    end
+
+    subgraph backing["BACKING SERVICES (attached resources, address from .env)"]
+        direction LR
+        ollama["Ollama (host)"]
+        pg[("PostgreSQL")]
+        redis[("Redis")]
+        qdrant[("Qdrant")]
+        rerank["Reranker (host, MPS)"]
+        lf["Langfuse Cloud"]
+        sandbox["Docker sandbox"]
+        cloud["Cloud LLM (reliability tier)"]
+    end
+
+    xcut["CROSS-CUTTING — config · logging · telemetry · errors · security · events"]:::ctx
+
+    client --> gw
+    infra --> ollama
+    infra --> pg
+    infra --> redis
+    infra --> qdrant
+    infra --> rerank
+    infra --> lf
+    tools --> sandbox
+    svc --> cloud
+    xcut -.-> app
+
+    classDef ctx fill:#eee,stroke:#999,stroke-dasharray:4 3,color:#333;

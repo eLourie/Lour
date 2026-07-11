@@ -1,0 +1,38 @@
+%% Agent flow — the supervisor graph and its two sub-agents (PROJECT_CONTEXT §7,
+%% Phase 5). A free-form /v1/chat turn walks the outer graph; a skill invocation
+%% enters directly at the agent its YAML declares. Render with mermaid.live.
+flowchart TD
+    start(["/v1/chat turn"]) --> recall["memory_recall — inject context"]
+    recall --> route{"route — structured Route (Pydantic)"}
+
+    route -->|researcher| researcher
+    route -->|coder| coder
+    route -->|direct| direct["direct answer (LLM, no tools)"]
+
+    subgraph researcher["researcher sub-agent"]
+        direction TB
+        r_plan["plan — multi-step plan"] --> r_act["act — native tool-calling"]
+        r_act -->|more work| r_act
+        r_act --> r_reflect{"reflect — done?"}
+        r_reflect -->|no| r_plan
+        r_reflect -->|yes| r_finish["finish"]
+    end
+
+    subgraph coder["coder sub-agent"]
+        direction TB
+        c_act["act — code_exec in sandbox"] --> c_done["finish"]
+    end
+
+    researcher --> write["memory_write — persist outcome"]
+    coder --> write
+    direct --> write
+    write --> done(["END — FINAL answer"])
+
+    %% Cross-cutting enforcement, active on every act step.
+    budget["BudgetEnforcer — iterations / tokens / wall_time + loop detection"]:::guard
+    gate["ToolGate — allowlist + HITL approval (interrupt)"]:::guard
+    r_act -.-> budget
+    r_act -.-> gate
+    c_act -.-> gate
+
+    classDef guard fill:#fff3cd,stroke:#d39e00,color:#333;
