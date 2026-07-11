@@ -69,6 +69,12 @@ eval = [
     "ragas>=0.2.0",
     "langchain-ollama>=0.2.0",
 ]
+# Demo UI (Phase 9, showcase). Streamlit is heavy and only needed to run the
+# demo client — install it on demand with `uv sync --extra ui`, not on every
+# sync. The server and the scripted `make demo` never import it.
+ui = [
+    "streamlit>=1.40.0",
+]
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",

@@ -18,7 +18,7 @@ RESET := \033[0m
         install lint fmt \
         test test-unit test-int test-cov \
         migrate migration shell-db \
-        dev demo eval
+        dev demo eval ui
 
 ## Docker Compose
 
@@ -86,6 +86,9 @@ dev: ## Start FastAPI in reload mode
 	uv run uvicorn app.main:app --reload --port $(APP_PORT) --log-level info
 
 ## Demo & Eval
+
+ui: ## Launch the Streamlit demo client (needs: uv sync --extra ui)
+	uv run --extra ui streamlit run ui/streamlit_app.py
 
 demo: ## Run scripted end-to-end demo
 	uv run python scripts/demo.py
